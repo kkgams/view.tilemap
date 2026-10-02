@@ -1,0 +1,27 @@
+{
+  "hostImports": {
+    "view.tile-extractor": [
+      "/core/runtime.js",
+      "/util/qoi/decode.js",
+      "/util/view-canvas-base.js"
+    ],
+    "view.tilemap": [
+      "/core/runtime.js",
+      "/util/tilemap-render.js",
+      "/util/undo.js",
+      "/util/view-canvas-base.js",
+      "/util/view-plugin.js"
+    ],
+    "view.tilemap-settings": [
+      "/core/runtime.js",
+      "/util/view-plugin.js"
+    ]
+  },
+  "limits": "Parent must add source-bound LICENSE/NOTICE evidence before distribution.",
+  "transformation": "Blend entries remove only the other registration block; original source retained under upstream/.",
+  "upstream_sha256": {
+    "views/tilemap-settings.js": "229e6beadd10218728ee149b7aa49bda16fd248afb369644f3f57b1628ecd6bd",
+    "views/view-tile-extractor.js": "4e3e5bfed711dfc5501ed0f596860aca37d88f004f251e920ac83017cdbee2c9",
+    "views/view-tilemap.js": "0dbf07b5b7caa5f05b9fe3fbd488c734fdd0fe0cffe5bfb71170955ee4081d52"
+  }
+}

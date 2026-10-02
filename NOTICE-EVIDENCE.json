@@ -1,0 +1,195 @@
+{
+  "audit_generator_sha256": "93198c6b5a79e94c6e73a2c0fce496e4c39316951a670cd8e38888a434b0184a",
+  "audit_input_sha256": {
+    "collection.json": "1bc7c436ad588338021663ead7c98f0a7f92d88e2cc46db7b18cec2a926d6087",
+    "sources.json": "5af4dd4635af7438e40f92fbc13fe58c4cf297b3e8e017a7b2ab1b73e092dce8",
+    "terms.json": "7696c0cfc7673e7556b9b453295ada6ea1626e40eb50ddaf87f21b82e0428262",
+    "wasi-source-history.json": "c7c53b60e3dbe88ecf5d29f811e446e1f59d23fd0c8cbc868b9566659925a1d1",
+    "wasi-sources.json": "7a55941506cb392f99976e0694e44bbf11105c11974844c5aebdc981fc7a6bca"
+  },
+  "collection": {
+    "limits": "comparison snapshots are not claimed original-import revisions",
+    "local_clang_version": "clang version 22.1.0-wasi-sdk (https://github.com/llvm/llvm-project 4434dabb69916856b824f68a64b029c67175e532)\nTarget: wasm32-unknown-wasip1\nThread model: posix\nInstalledDir: /Users/gook/Repos/gams3/.dev-tools/wasi-sdk-33.0-arm64-macos/bin\nConfiguration file: /Users/gook/Repos/gams3/.dev-tools/wasi-sdk-33.0-arm64-macos/bin/clang.cfg\n",
+    "local_wasi_sdk_version": "33.0+m\nwasi-libc: 161b3195fc25\nllvm: 4434dabb6991\nllvm-version: 22.1.0\nconfig: f992bcc08219\n",
+    "markov_comparison_remote": "justgook/MarkovJunior",
+    "markov_comparison_revision": "c44cae86d03cdcd13154a96170ca7a722aabb8d6",
+    "snapshot": "working-tree hashes, not clean-commit claim",
+    "source_revision": "0f0a1b8ae678d45b451aa4d2841797fcbc2f503d"
+  },
+  "distribution_contract": {
+    "files": {
+      "src/view.tile-extractor/views/view-tile-extractor.js": "views/view-tile-extractor.js",
+      "src/view.tilemap-settings/views/tilemap-settings.js": "views/tilemap-settings.js",
+      "src/view.tilemap/views/view-tilemap.js": "views/view-tilemap.js"
+    },
+    "packages": [
+      {
+        "entry": "views/view-tilemap.js",
+        "files": {
+          "src/view.tilemap/views/view-tilemap.js": "views/view-tilemap.js"
+        },
+        "kind": "view",
+        "name": "view.tilemap",
+        "sha256": {
+          "src/view.tilemap/views/view-tilemap.js": "0dbf07b5b7caa5f05b9fe3fbd488c734fdd0fe0cffe5bfb71170955ee4081d52"
+        },
+        "tag": "view-tilemap"
+      },
+      {
+        "entry": "views/tilemap-settings.js",
+        "files": {
+          "src/view.tilemap-settings/views/tilemap-settings.js": "views/tilemap-settings.js"
+        },
+        "kind": "view",
+        "name": "view.tilemap-settings",
+        "sha256": {
+          "src/view.tilemap-settings/views/tilemap-settings.js": "229e6beadd10218728ee149b7aa49bda16fd248afb369644f3f57b1628ecd6bd"
+        },
+        "tag": "tilemap-settings"
+      },
+      {
+        "entry": "views/view-tile-extractor.js",
+        "files": {
+          "src/view.tile-extractor/views/view-tile-extractor.js": "views/view-tile-extractor.js"
+        },
+        "kind": "view",
+        "name": "view.tile-extractor",
+        "sha256": {
+          "src/view.tile-extractor/views/view-tile-extractor.js": "4e3e5bfed711dfc5501ed0f596860aca37d88f004f251e920ac83017cdbee2c9"
+        },
+        "tag": "view-tile-extractor"
+      }
+    ]
+  },
+  "files_sha256": {
+    ".gitattributes": "02a00a5e791aceec9288ce23f6ccdd26fb5356bc6da5f926c1866c1b906d1d8e",
+    ".github/workflows/release.yml": "9d4c91a6615d1c045fb2398864aa72b633d6630c6f6e8aff0406faccac076107",
+    ".gitignore": "e1194303c37a19ec3d29c4d2d8bd83ddfbd1bf387ce33d929097d526f71c6e31",
+    "HOST-CONTRACT.json": "3da8fee9707142f7c3021ecb53a72590222a50a388dfd549b3e46eee35d01eb3",
+    "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "LICENSING.md": "9c90a7d909f589c226e600b2cd66f551d7769ba9de2b67fc2ee5e9d751de256e",
+    "PUBLISHING.md": "74c3775aed7c97b1e898eff6d4c97fee78d6a137de40f81f8699b049668699a3",
+    "README.md": "4ad04a96678915a2ac3b17e189e8c532081cd8af86f1971f58a4e324a52fa3bf",
+    "SOURCE-CLOSURE.json": "012dc8f2c687ac65eaae311022f3ff3d96ba3e6c97f3bb197c66f0038d1ba026",
+    "THIRD-PARTY-REVIEW.md": "fcfe5ba6d9c20caaf583b406fffe815e0226a805ccd04a1fa2c838f875b1d577",
+    "canonical.json": "9bc13abdb443a9652a160947567d548becacaee8f20959b17412dab9b14edd88",
+    "package.json": "bcb6ecfa848255bc9a91d5979d6dc643bb75d5de8568ba95aabb50185f9b92ad",
+    "release.json": "a48996f9f7b40cbfca0405ae6b3aeaf185a20c6056fa9e25e6ec3605afe1bf86",
+    "scripts/release.py": "4cb8c0ad2e49410d2e7ab8380f002bc2d83c01428444f5cb6d38535a5e7cb624",
+    "scripts/test-blend.mjs": "df9c32d309096a9bdd3ee92e507500fa0039f088d0c10c7d6c60e67128ea7010",
+    "scripts/verify.mjs": "229c366e3db01a6706449335f0d47534b07ff598d5c8199b7aa15c75f1aa5d6f",
+    "src/view.tile-extractor/views/view-tile-extractor.js": "4e3e5bfed711dfc5501ed0f596860aca37d88f004f251e920ac83017cdbee2c9",
+    "src/view.tilemap-settings/views/tilemap-settings.js": "229e6beadd10218728ee149b7aa49bda16fd248afb369644f3f57b1628ecd6bd",
+    "src/view.tilemap/views/view-tilemap.js": "0dbf07b5b7caa5f05b9fe3fbd488c734fdd0fe0cffe5bfb71170955ee4081d52",
+    "test/legal_fixture.py": "37c2dd10682000390f37d0cd3f08e2e86c6c812efcc0b9a516c5369c6ad50cec",
+    "test/test_release.py": "c49cc8109f4154310b4fc476f0c4b3de33c72cbc9ac31ee7ea4e8e79902d90d2",
+    "upstream/views/tilemap-settings.js": "229e6beadd10218728ee149b7aa49bda16fd248afb369644f3f57b1628ecd6bd",
+    "upstream/views/view-tile-extractor.js": "4e3e5bfed711dfc5501ed0f596860aca37d88f004f251e920ac83017cdbee2c9",
+    "upstream/views/view-tilemap.js": "0dbf07b5b7caa5f05b9fe3fbd488c734fdd0fe0cffe5bfb71170955ee4081d52"
+  },
+  "findings": [
+    "View source/header/import scan found no identifiable vendored third-party implementation in selected entry files. This is a bounded scan, not an authorship certificate. BulletML command/schema ideas alone do not prove a copied interpreter; no external BulletML package is bundled in the current source closure.",
+    "Absolute /util/, /widgets/, /core/ imports are Host-provided runtime dependencies, not distribution of those helper bytes. In particular markdown-it, Ajv, aseprite.js, voxel helpers and icon font names do not bundle their libraries/font binaries. Host has a separate approved notice boundary; this audit does not recertify Host provenance."
+  ],
+  "hash_exclusions": {
+    "NOTICE": "contains the digest of NOTICE-EVIDENCE.json; independently hashed in returned record",
+    "NOTICE-EVIDENCE.json": "self-reference: this manifest cannot hash itself",
+    "SOURCE.json": "written by orchestrator after audit; must bind NOTICE and evidence independently"
+  },
+  "host_runtime_imports": [
+    "/core/runtime.js",
+    "/util/qoi/decode.js",
+    "/util/tilemap-render.js",
+    "/util/undo.js",
+    "/util/view-canvas-base.js",
+    "/util/view-plugin.js"
+  ],
+  "limits": [
+    "Working-tree source comparison, not an original-authorship, original-import, or all-history certificate. Owner Apache approval applies only to owner-controlled contributions.",
+    "Exact prepared repository bytes are bound below, including build inputs/lockfiles/tests. No current build, enabled-feature graph, linked-code reachability, adapter digest, or final WASM/ZIP contents are certified by this source audit.",
+    "Pinned upstream license comparisons establish readable terms, not the version of every historical imported fragment. Newly discovered identifiable missing permissions remain blockers; historical lineage uncertainty alone does not veto approved GAMS-authored work.",
+    "Build tools (jco, wit-bindgen, C#/Odin parity runners) are not automatically distributed runtime code. Go module inventory conservatively includes generator-only dependencies. Final linked runtime and standard adapters require hosted build evidence."
+  ],
+  "notice_body_sha256": "4d2dc2e8c3c03e46c6b518f4ba96b4daff97cb57aacf6a82f1e6991eca270d5e",
+  "permission_blockers": [],
+  "prepared_adaptations": {
+    ".gitattributes": {
+      "comparison_candidates": [
+        "packages/fonts/licenses/.gitattributes",
+        "packages/util/licenses/.gitattributes",
+        "packages/widgets/licenses/.gitattributes"
+      ],
+      "status": "prepared/generated/adapted bytes differ; not asserted identical to reviewed source"
+    },
+    "README.md": {
+      "comparison_candidates": [
+        "plugins/markov-junior.comp/README.md",
+        "plugins/markov-junior.comp/docs/README.md"
+      ],
+      "status": "prepared/generated/adapted bytes differ; not asserted identical to reviewed source"
+    }
+  },
+  "prepared_exact_source_origins": {
+    "src/view.tile-extractor/views/view-tile-extractor.js": [
+      "views/view-tile-extractor.js"
+    ],
+    "src/view.tilemap-settings/views/tilemap-settings.js": [
+      "views/tilemap-settings.js"
+    ],
+    "src/view.tilemap/views/view-tilemap.js": [
+      "views/view-tilemap.js"
+    ],
+    "upstream/views/tilemap-settings.js": [
+      "views/tilemap-settings.js"
+    ],
+    "upstream/views/view-tile-extractor.js": [
+      "views/view-tile-extractor.js"
+    ],
+    "upstream/views/view-tilemap.js": [
+      "views/view-tilemap.js"
+    ]
+  },
+  "repository": "view.tilemap",
+  "schema": 1,
+  "scope": "selected prepared repository/source inputs; no build executed",
+  "shipped_host_source_files": [],
+  "source_comparison_exclusions": {
+    "directories": [
+      ".cache",
+      ".git",
+      ".zig-cache",
+      "__pycache__",
+      "bin",
+      "build",
+      "build.nosync",
+      "dist",
+      "internal",
+      "node_modules",
+      "obj",
+      "target",
+      "zig-out"
+    ],
+    "generated_suffix": ".mjir.json",
+    "legal_evidence_preserved": true,
+    "suffixes": [
+      ".a",
+      ".bin",
+      ".dll",
+      ".dylib",
+      ".exe",
+      ".o",
+      ".obj",
+      ".pyc",
+      ".so",
+      ".stamp",
+      ".wasm"
+    ]
+  },
+  "source_files_sha256": {
+    "views/tilemap-settings.js": "229e6beadd10218728ee149b7aa49bda16fd248afb369644f3f57b1628ecd6bd",
+    "views/view-tile-extractor.js": "4e3e5bfed711dfc5501ed0f596860aca37d88f004f251e920ac83017cdbee2c9",
+    "views/view-tilemap.js": "0dbf07b5b7caa5f05b9fe3fbd488c734fdd0fe0cffe5bfb71170955ee4081d52"
+  },
+  "upstream_terms": [],
+  "wasi_vendor_files_sha256": {}
+}
