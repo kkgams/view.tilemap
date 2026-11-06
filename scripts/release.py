@@ -17,11 +17,11 @@ def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def approved(root):
+def legal_files(root):
     for name in ('LICENSE', 'NOTICE'):
-        expected = os.environ['APPROVED_' + name + '_SHA256']
-        if not re.fullmatch('[0-9a-f]{64}', expected) or digest((root / name).read_bytes()) != expected:
-            raise ValueError(f'{name} owner-approved digest missing or mismatched')
+        path = root / name
+        if path.is_symlink() or not path.is_file() or not path.read_bytes().strip():
+            raise ValueError(f'required nonempty regular file: {name}')
     if 'PROVENANCE_PENDING' in (root / 'NOTICE').read_text():
         raise ValueError('source-bound legal evidence pending')
 
@@ -157,7 +157,7 @@ def payload(root, tag):
         raise ValueError('tag/version mismatch')
     if package['license'] != 'Apache-2.0' or package['private'] is not True:
         raise ValueError('invalid publication policy')
-    approved(root)
+    legal_files(root)
     proof = read_owned(root, 'NOTICE-EVIDENCE.json')
     evidence = verify_evidence(proof, read_owned(root, 'NOTICE'), repository, config)
     if input_set(root) != set(evidence):
@@ -310,16 +310,14 @@ def install(archives, checksums, destination):
             output.write(content)
 
 
-def branch(tag):
+def identity(tag):
     package = json.loads((Path(__file__).resolve().parents[1] / 'package.json').read_text())
     if tag != 'v' + package['version']:
         raise ValueError('tag/version mismatch')
-    subprocess.run(['git', 'fetch', '--no-tags', 'origin', 'refs/heads/release'], check=True)
     head = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip()
-    release = subprocess.check_output(['git', 'rev-parse', 'FETCH_HEAD']).strip()
     tagged = subprocess.check_output(['git', 'rev-parse', tag + '^{commit}']).strip()
-    if head != release or head != tagged or head.decode() != os.environ['GITHUB_SHA']:
-        raise ValueError('tag must match current release branch HEAD and workflow SHA')
+    if head != tagged or head.decode() != os.environ['GITHUB_SHA']:
+        raise ValueError('tag must match checkout HEAD and workflow SHA')
 
 
 def absent(repository, tag, token):
@@ -337,19 +335,6 @@ def absent(repository, tag, token):
             return
         raise
     raise ValueError('immutable release already exists; refusing overwrite')
-
-
-def policy(repository, token):
-    """Read-only repository policy gate; API/access failures are fatal."""
-    for endpoint in ('', '/immutable-releases'):
-        request = urllib.request.Request(f'https://api.github.com/repos/{repository}{endpoint}',
-            headers={'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json'})
-        with urllib.request.urlopen(request, timeout=30) as response:
-            document = json.load(response)
-        if endpoint == '' and (document['private'] or document['visibility'] != 'public'):
-            raise ValueError('repository must be public')
-        if endpoint and document['enabled'] is not True:
-            raise ValueError('repository immutable releases must be enabled')
 
 
 def draft(root, out, tag, token):
@@ -403,7 +388,7 @@ def public(root, out, tag):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('command', choices=['stage', 'check', 'branch', 'absent', 'install', 'public', 'policy', 'draft'])
+    parser.add_argument('command', choices=['stage', 'check', 'identity', 'absent', 'install', 'public', 'draft'])
     parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument('--out', type=Path, default=Path('dist/candidate'))
     parser.add_argument('--tag', required=True)
@@ -413,14 +398,12 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.command in ('stage', 'check'):
         globals()[args.command](args.root, args.out, args.tag)
-    elif args.command == 'branch':
-        branch(args.tag)
+    elif args.command == 'identity':
+        identity(args.tag)
     elif args.command == 'install':
         install(args.archives, args.checksums, args.destination)
     elif args.command == 'public':
         public(args.root, args.out, args.tag)
-    elif args.command == 'policy':
-        policy(os.environ['GITHUB_REPOSITORY'], os.environ['GH_TOKEN'])
     elif args.command == 'draft':
         draft(args.root, args.out, args.tag, os.environ['GH_TOKEN'])
     else:

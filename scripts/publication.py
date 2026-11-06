@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Fail-closed, draft-first CI publisher. Reads may be repeated; writes never are.
 
-RELEASE_POLICY_TOKEN needs fine-grained Administration:read. GH_TOKEN is the
-workflow contents:write token. No existing release (including a draft) is resumed.
+GH_TOKEN is the automatic workflow contents:write token. No existing release (including a draft) is resumed.
 """
 import argparse
 import json
@@ -65,19 +64,9 @@ def repository_state(document, repository):
             'repository must be canonical and public')
 
 
-def policy(repository):
-    credential = token('RELEASE_POLICY_TOKEN')
-    repository_state(http(f'{API}/repos/{repository}', credential), repository)
-    document = http(f'{API}/repos/{repository}/immutable-releases', credential)
-    require(type(document) is dict and document['enabled'] is True,
-            'repository immutable releases must be enabled')
-
-
 def gh(*args, timeout=60):
     env = dict(os.environ, GH_TOKEN=token('GH_TOKEN'), GH_HOST='github.com',
                GH_PROMPT_DISABLED='1', GH_DEBUG='')
-    # The administrative credential must never enter a gh subprocess.
-    env.pop('RELEASE_POLICY_TOKEN', None)
     result = subprocess.run(['gh', *map(str, args)], env=env, capture_output=True, timeout=timeout)
     require(result.returncode == 0, 'gh command failed (exit ' + str(result.returncode) + '): ' + ' '.join(map(str, args)))
     return result.stdout
@@ -202,7 +191,7 @@ def source(root, out, tag):
     previous = Path.cwd()
     try:
         os.chdir(root)
-        release.branch(tag)
+        release.identity(tag)
     finally:
         os.chdir(previous)
     ref = 'refs/tags/' + tag
@@ -235,11 +224,9 @@ def public_snapshot(repository, tag, expected):
 def publish(root, out, tag):
     repository, tag = identity(root, tag)
     token('GH_TOKEN')
-    token('RELEASE_POLICY_TOKEN')
     bound = source(root, out, tag)
     expected = {p.name: p.read_bytes() for p in out.iterdir()}
     repository_state(api(repository), repository)
-    policy(repository)
     require(not matching(repository, tag), 'existing tag release; refusing publication')
     gh('release', 'create', tag, *[out / name for name in sorted(expected)],
        '--repo', repository, '--draft', '--verify-tag', '--latest=false',
@@ -252,7 +239,6 @@ def publish(root, out, tag):
     require({p.name: p.read_bytes() for p in out.iterdir()} == expected, 'candidate changed')
     require(identity(root, tag) == (repository, tag), 'publication identity changed')
     repository_state(api(repository), repository)
-    policy(repository)
     require(draft_snapshot(repository, tag, expected) == draft, 'draft changed before publication')
     gh('release', 'edit', tag, '--repo', repository, '--draft=false', '--latest=false')
     document = public_snapshot(repository, tag, expected)
@@ -265,18 +251,15 @@ def publish(root, out, tag):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', nargs='?', choices=('policy', 'publish'), default='policy')
+    parser.add_argument('command', choices=('publish',))
     parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument('--out', type=Path, default=Path('dist/candidate'))
     parser.add_argument('--tag')
     args = parser.parse_args(argv)
     root = args.root.resolve()
     repository, tag = identity(root, args.tag)
-    if args.command == 'policy':
-        policy(repository)
-    else:
-        out = args.out if args.out.is_absolute() else root / args.out
-        publish(root, out, tag)
+    out = args.out if args.out.is_absolute() else root / args.out
+    publish(root, out, tag)
 
 
 if __name__ == '__main__':

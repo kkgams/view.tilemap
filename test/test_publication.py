@@ -60,13 +60,13 @@ class PublicationTests(unittest.TestCase):
         self.before_edit = lambda: None
         self.start_patch(patch.dict(os.environ, {
             'GITHUB_REPOSITORY': self.repo, 'GITHUB_SHA': self.sha,
-            'GH_TOKEN': 'contents-secret', 'RELEASE_POLICY_TOKEN': 'admin-secret',
+            'GH_TOKEN': 'contents-secret',
             'GH_DEBUG': 'api',
         }, clear=True))
         self.runner = self.start_patch(patch.object(p.subprocess, 'run', side_effect=self.run_command))
         self.opener = self.start_patch(patch.object(p.urllib.request, 'urlopen', side_effect=self.urlopen))
         self.check = self.start_patch(patch.object(p.release, 'check'))
-        self.branch = self.start_patch(patch.object(p.release, 'branch'))
+        self.identity = self.start_patch(patch.object(p.release, 'identity'))
         self.start_patch(patch.object(p.time, 'monotonic', side_effect=lambda: self.clock))
         self.start_patch(patch.object(p.time, 'sleep', side_effect=self.sleep))
 
@@ -95,9 +95,7 @@ class PublicationTests(unittest.TestCase):
             return subprocess.CompletedProcess(args, 0, output.encode(), b'')
         self.assertEqual(args[0], 'gh')
         self.assertEqual(kwargs['env']['GH_TOKEN'], 'contents-secret')
-        self.assertNotIn('RELEASE_POLICY_TOKEN', kwargs['env'])
         self.assertEqual(kwargs['env']['GH_DEBUG'], '')
-        self.assertNotIn('admin-secret', repr(args))
         self.assertNotIn('contents-secret', repr(args))
         output = b''
         if args[1] == 'api':
@@ -154,15 +152,8 @@ class PublicationTests(unittest.TestCase):
     def urlopen(self, request, **kwargs):
         self.requests.append(request)
         url = request.full_url
-        if request.get_header('Authorization') is not None:
-            self.assertEqual(request.get_header('Authorization'), 'Bearer admin-secret')
-            if url == f'{p.API}/repos/{self.repo}':
-                document = self.repository
-            elif url == f'{p.API}/repos/{self.repo}/immutable-releases':
-                document = {'enabled': True}
-            else:
-                self.fail('policy token used for non-policy endpoint')
-        elif '/releases/tags/' in url:
+        self.assertIsNone(request.get_header('Authorization'))
+        if '/releases/tags/' in url:
             self.assertTrue(self.published)
             document = self.document
         elif '/releases/17/assets?' in url:
@@ -186,40 +177,19 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual(self.clock, 3)
         self.assertEqual(self.writes(), ['create', 'edit'])
         self.assertEqual(self.check.call_count, 2)
-        self.assertEqual(self.branch.call_count, 2)
+        self.assertEqual(self.identity.call_count, 2)
         self.assertTrue(self.published)
-        self.assertEqual(sum('/immutable-releases' in r.full_url for r in self.requests), 2)
+        self.assertFalse(any('/immutable-releases' in r.full_url for r in self.requests))
 
-    def test_default_is_read_only_policy_and_needs_no_contents_token(self):
-        del os.environ['GH_TOKEN']
-        p.main(['--root', str(self.root)])
-        self.assertEqual(self.calls, [])
-        self.assertEqual(len(self.requests), 2)
-
-    def test_policy_never_uses_contents_token_as_fallback(self):
-        del os.environ['RELEASE_POLICY_TOKEN']
-        with self.assertRaises(KeyError):
-            p.policy(self.repo)
-        self.assertEqual(self.requests, [])
-        self.assertEqual(self.calls, [])
-
-    def test_policy_403_is_fatal_not_absence(self):
-        error = urllib.error.HTTPError('https://api.github.com/policy', 403, 'Forbidden', {}, io.BytesIO())
-        self.addCleanup(error.close)
-        self.opener.side_effect = error
-        with self.assertRaises(urllib.error.HTTPError):
-            self.publish()
-        self.assertEqual(self.writes(), [])
-
-    def test_policy_disabled_private_wrong_repo_or_malformed(self):
-        for document in ({'enabled': False}, {'enabled': 1}, {}, [], {'enabled': 'true'}):
-            with self.subTest(document=document), patch.object(p, 'http', side_effect=[self.repository, document]):
-                with self.assertRaises((ValueError, KeyError)):
-                    p.policy(self.repo)
+    def test_public_repository_metadata_is_required(self):
         for field, value in [('private', True), ('private', 0), ('visibility', 'private'), ('full_name', 'other/repo')]:
             document = dict(self.repository, **{field: value})
             with self.subTest(field=field), self.assertRaises(ValueError):
                 p.repository_state(document, self.repo)
+        with patch.object(p, 'repository_state', side_effect=ValueError('invalid repository')):
+            with self.assertRaises(ValueError):
+                self.publish()
+        self.assertEqual(self.writes(), [])
 
     def test_existing_draft_or_public_release_refused(self):
         for draft in (True, False):
@@ -333,20 +303,20 @@ class PublicationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'public metadata changed'):
             self.publish()
 
-    def test_branch_change_or_candidate_failure_blocks_writes(self):
-        self.branch.side_effect = ValueError('changed branch/workflow SHA')
+    def test_tag_identity_change_or_candidate_failure_blocks_writes(self):
+        self.identity.side_effect = ValueError('changed tag/workflow SHA')
         with self.assertRaises(ValueError):
             self.publish()
         self.assertEqual(self.writes(), [])
-        self.branch.side_effect = None
+        self.identity.side_effect = None
         self.check.side_effect = ValueError('candidate audit mismatch')
         with self.assertRaises(ValueError):
             self.publish()
         self.assertEqual(self.writes(), [])
 
-    def test_branch_moves_after_create_blocks_edit(self):
-        self.branch.side_effect = [None, ValueError('branch moved')]
-        with self.assertRaisesRegex(ValueError, 'branch moved'):
+    def test_tag_identity_changes_after_create_blocks_edit(self):
+        self.identity.side_effect = [None, ValueError('tag identity changed')]
+        with self.assertRaisesRegex(ValueError, 'tag identity changed'):
             self.publish()
         self.assertEqual(self.writes(), ['create'])
 
@@ -378,21 +348,10 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual(self.calls, [])
         self.assertEqual(self.requests, [])
 
-    def test_policy_recheck_failure_leaves_draft_without_edit(self):
-        original = self.urlopen
-        probes = 0
-        def fail(request, **kwargs):
-            nonlocal probes
-            if request.full_url.endswith('/immutable-releases'):
-                probes += 1
-                if probes == 2:
-                    error = urllib.error.HTTPError(request.full_url, 403, 'Forbidden', {}, io.BytesIO())
-                    self.addCleanup(error.close)
-                    raise error
-            return original(request, **kwargs)
-        self.opener.side_effect = fail
-        with self.assertRaises(urllib.error.HTTPError):
-            self.publish()
+    def test_repository_recheck_failure_leaves_draft_without_edit(self):
+        with patch.object(p, 'repository_state', side_effect=[None, ValueError('repository changed')]):
+            with self.assertRaises(ValueError):
+                self.publish()
         self.assertEqual(self.writes(), ['create'])
 
     def test_edit_failure_never_retries_or_repairs(self):
