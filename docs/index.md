@@ -1,58 +1,55 @@
 ---
-title: Development
+title: Tilemap Views
 status: reference
 ---
 
-# view.tilemap
+# Tilemap Views
 
-## Local Project
+Tilemap painting, map settings and tile extraction for [GAMS](https://github.com/kkgams/gams).
 
-Use Node.js 24 and Python 3 (standard library), plus Make, curl and unzip.
-`make open` additionally requires macOS Apple Silicon.
+| View | Source → ZIP entry | Screenshot | Original work |
+| --- | --- | --- | --- |
+| Tilemap editor (`view-tilemap`) | `src/views/view-tilemap.js` → `views/view-tilemap.js` | Not available | GAMS contributors |
+| Settings (`tilemap-settings`) | `src/views/tilemap-settings.js` → `views/tilemap-settings.js` | Not available | GAMS contributors |
+| Tile extractor (`view-tile-extractor`) | `src/views/view-tile-extractor.js` → `views/view-tile-extractor.js` | Not available | GAMS contributors |
 
-```sh
-make build
-make test
-make open
-```
+## Development
 
-Canonical JavaScript loads directly from `src/`; there is no compilation step.
-`make build` validates source hashes, imports, syntax and local Project configuration.
-`make open` runs that build and downloads the latest released GAMS Host into
-ignored `tools/gams.app` only when absent. It preserves accompanying notices in
-`tools/gams-release-notices` and explicitly sets `GAMS_APP_CWD` to this repository
-to open the local `gams.json`. Existing downloads are never updated implicitly;
-launch does not remove Gatekeeper quarantine. First use needs network access.
-Installed Units are cached in ignored `gams_modules/`. No sibling checkout is used.
+Requires Make, Node.js 24, Python 3, curl, zip, unzip and shasum. Launch requires
+macOS Apple Silicon. Supporting Units are pinned in `gams.json`; no sibling
+checkout is needed. Use New or Open to load a map; settings and extraction use
+the local companion Views. File selection and properties use released Views;
+tile detection uses the released plugin.
 
-The editor starts with no map loaded. Use New or Open. Settings and tile extraction use local companion Views. File selection and properties use pinned released Views; tile detection uses the pinned released plugin.
+| Command | Purpose |
+| --- | --- |
+| `make open` | Open local sources in the released Host with explicit `GAMS_APP_CWD` and `GAMS_CONFIG`. |
+| `make check` | Check JavaScript syntax without dependencies. |
+| `make package` | Build `view.tilemap.zip`, `view.tilemap-settings.zip`, `view.tile-extractor.zip` and `SHA256SUMS` under `build.nosync/`. |
+| `make serve-docs DOCS_PORT=8080` | Preview this wiki with pinned justgook/wiki v1.4.0. |
+| `make validate-docs` | Validate wiki content. |
+| `make docs` | Build `build.nosync/site/`. |
+| `make clean` | Delete generated `build.nosync/`, downloaded Host and notices under `tools/`, and identified configured downloads in `gams_modules/`; preserve supplied Units and refuse tracked files and symlinked deletion paths. |
 
-Inputs under `dev-assets/` are ignored and not packaged. Only sources listed in
-`release.json` are deployed by existing release tooling. Runtime/UI behavior,
-package identities and version-tag publication are unchanged. Native GUI behavior
-is a separate check; `make -n open` does not verify it.
+First launch needs network access and preserves notices beside `tools/gams.app`.
+Existing downloads are not updated implicitly and Gatekeeper is not bypassed.
+User inputs in `dev-assets/` are neither packaged nor cleaned. JavaScript loads
+directly from `src/views/`; there is no compilation step.
 
-## Documentation
+## Runtime requirements
 
-```sh
-make serve-docs DOCS_PORT=8081
-make validate-docs
-make docs
-```
+The original integration contract targets GAMS 2.0.3. Views require browser DOM,
+custom elements, Host semantic CSS and configured plugin/service providers.
+Missing required APIs, configuration or schemas are errors, not optional features.
+The local Project supplies filesystem, layout and tile-detection plugins, UI
+Services, file chooser and properties Views through explicit released pins.
 
-These targets use pinned `justgook/wiki` v1.4.0 and this repository's `docs/`.
-The independent preview port defaults to 8080. `make docs` builds the portable
-site in ignored `build/site/`; `make build-docs` is the same build. Engine
-downloads also stay under ignored `build/`.
-Every push to `release` builds with `make docs` and deploys GitHub Pages through
-`.github/workflows/pages.yml`, independently of version tags and publication
-approval variables. Enable GitHub Pages with GitHub Actions as its source.
+| View | Host-owned imports |
+| --- | --- |
+| Tilemap | `/core/runtime.js`, `/util/tilemap-render.js`, `/util/undo.js`, `/util/view-canvas-base.js`, `/util/view-plugin.js` |
+| Settings | `/core/runtime.js`, `/util/view-plugin.js` |
+| Tile extractor | `/core/runtime.js`, `/util/qoi/decode.js`, `/util/view-canvas-base.js` |
 
-## Checks and publication
-
-Run `make check` and `make test` with Node.js 24 and Python 3. Existing tests cover
-source/release contracts, not native GUI workflows. The tag workflow, licenses,
-notices and legal evidence are unchanged. Added development files and docs are
-not included in legal evidence snapshots; exact-input approval requires separate
-review before publication. Existing publication gates remain strict; see the
-repository's `PUBLISHING.md` for the owner-controlled release process.
+These Host helpers are not bundled. Settings retains its JSON-schema validation
+TODO; schema conformance is not claimed. Syntax checks do not verify painting,
+undo, settings validation or extraction in the native GUI.

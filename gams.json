@@ -34,17 +34,17 @@
     },
     "views": {
       "view-tilemap": {
-        "url": "src/view.tilemap/views/view-tilemap.js",
+        "url": "src/views/view-tilemap.js",
         "label": "view-tilemap",
         "internal": false
       },
       "tilemap-settings": {
-        "url": "src/view.tilemap-settings/views/tilemap-settings.js",
+        "url": "src/views/tilemap-settings.js",
         "label": "tilemap-settings",
         "internal": true
       },
       "view-tile-extractor": {
-        "url": "src/view.tile-extractor/views/view-tile-extractor.js",
+        "url": "src/views/view-tile-extractor.js",
         "label": "view-tile-extractor",
         "internal": true
       },

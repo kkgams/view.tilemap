@@ -1,10 +1,5 @@
-node_modules/
-dist/
-__pycache__/
-*.pyc
-.DS_Store
-
-/build/
+/build.nosync/
 /tools/
 /gams_modules/
 /dev-assets/
+.DS_Store

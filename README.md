@@ -1,30 +1,30 @@
-# view.tilemap
+# Tilemap Views
 
-One separately installable ZIP per View, never npm/OCI. Host contract: GAMS 2.0.3.
-Run npm test (Node 24, Python 3 stdlib). release.json binds package identities, deployment maps and hashes.
-Absolute imports enumerated in release.json are required Host-owned runtime/util/widget APIs; missing APIs, config or schemas are bugs, not optional fallbacks.
-Keep Project Config ids/tags and URLs as deployed. view-markdow spelling is deliberately unchanged.
-Blend 1D retains views/view-animation-blend-spaces.js; independently installed 2D requires views/view-animation-blend-space-2d.js in Project Config. No HTML/class behavior is rewritten.
-Install using scripts/release.py install (verified checksums), retain metadata under notices/project-units/<package>. Refuse all overwrite collisions.
-Dependencies (plugins, sibling Views, UI Services) remain Project configured; static Host imports are documented, not vendored.
-HOST-CONTRACT.json includes required dynamic widget paths and known legacy schema limits.
-GUI validation pending: Tilemap painting/undo, settings validation and tile extraction. No blanket E2E claim.
+Tilemap painting, map settings and tile extraction for [GAMS](https://github.com/kkgams/gams).
 
-## Local development and docs
+| View | Source → ZIP entry | Screenshot | License | Original work |
+| --- | --- | --- | --- | --- |
+| Tilemap editor (`view-tilemap`) | `src/views/view-tilemap.js` → `views/view-tilemap.js` | Not available | [Apache-2.0](LICENSE), [notice](NOTICE) | GAMS contributors |
+| Settings (`tilemap-settings`) | `src/views/tilemap-settings.js` → `views/tilemap-settings.js` | Not available | [Apache-2.0](LICENSE), [notice](NOTICE) | GAMS contributors |
+| Tile extractor (`view-tile-extractor`) | `src/views/view-tile-extractor.js` → `views/view-tile-extractor.js` | Not available | [Apache-2.0](LICENSE), [notice](NOTICE) | GAMS contributors |
 
-Use Node.js 24, Python 3, Make, curl and unzip. `make build` checks canonical
-local JavaScript and Project configuration; `make test` runs the existing tests.
-`make open` opens this repository's `gams.json` in downloaded `tools/gams.app`
-(macOS Apple Silicon), with explicit `GAMS_APP_CWD` and no sibling checkout.
+## Development
 
-`make serve-docs` serves `docs/` using pinned wiki v1.4.0 (`DOCS_PORT` overrides 8080).
-`make validate-docs` validates it; `make docs` builds `build/site/`.
-Every push to `release` publishes docs through GitHub Pages independently of
-version tags. See [development details](docs/index.md) for setup and limitations.
+Requires Make, Node.js 24 (dependency-free syntax checks), Python 3, curl, unzip,
+zip and shasum. Local launch requires macOS Apple Silicon and network access on
+first use; it uses canonical local sources and pinned released supporting Units,
+not neighboring checkouts. The editor starts empty; use New or Open.
 
-## Publication
+| Command | Purpose |
+| --- | --- |
+| `make open` | Download the released Host if absent, then open local `gams.json`. |
+| `make check` | Check JavaScript syntax. |
+| `make package` | Build three independent, stable-name ZIPs and `SHA256SUMS` under `build.nosync/`. |
+| `make serve-docs DOCS_PORT=8080` | Preview documentation with pinned wiki v1.4.0. |
+| `make validate-docs` | Validate documentation. |
+| `make docs` | Build `build.nosync/site/`. |
+| `make clean` | Remove `build.nosync/`, downloaded `tools/gams.app`, its `tools/gams-release-notices/` and identified configured downloads in `gams_modules/`; preserve supplied Units and refuse tracked files or symlinked deletion paths. |
 
-Pushing a matching version tag authorizes the GitHub Release; no approval digest
-variables or special release branch are required. Tests, source/legal evidence,
-exact LICENSE/NOTICE payloads, deterministic archives, SHA256SUMS and no-overwrite
-checks remain mandatory. See `PUBLISHING.md`; this migration refreshes no evidence.
+Host downloads are preserved until explicitly cleaned; launch never updates an
+existing app or bypasses Gatekeeper. `dev-assets/` is optional user input and is
+not packaged or cleaned. See [runtime requirements](docs/index.md#runtime-requirements).
