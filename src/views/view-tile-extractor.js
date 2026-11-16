@@ -499,7 +499,16 @@ export class ViewTileExtractor extends ViewCanvasBase {
         this.setStatus(`Saving ${path}...`, "info")
         try {
             const tilemap = unwrap(await runtime.invoke("tile-detect/tile-detect::to-tilemap", this.extractOutput), "tilemap conversion")
-            unwrap(await runtime.invoke("fs/fs::write-text", path, `${JSON.stringify(tilemap, null, 2)}\n`), path)
+            const dimensions = this.extractOutput.tilemap
+            assert(dimensions["tile-w"] === dimensions["tile-h"], "Tilemap JSON requires square tiles; rectangular tiles can be saved as a QOI tileset")
+            const props = Object.fromEntries(tilemap.props)
+            props.tileSize = String(dimensions["tile-w"])
+            if (this.tilesetPath) props.tilesets = JSON.stringify([{ file: this.tilesetPath }])
+            const document = {
+                props,
+                layers: tilemap.layers.map((layer) => ({ ...layer, props: Object.fromEntries(layer.props) })),
+            }
+            unwrap(await runtime.invoke("fs/fs::write-text", path, `${JSON.stringify(document, null, 2)}\n`), path)
             this.setStatus(`Saved ${path}`, "success")
             this.setResult(`Tilemap saved to ${path}`)
         } catch (error) {

@@ -25,6 +25,7 @@ tile detection uses the released plugin.
 | --- | --- |
 | `make open` | Open local sources in the released Host with explicit `GAMS_APP_CWD` and `GAMS_CONFIG`. |
 | `make check` | Check JavaScript syntax without dependencies. |
+| `make test` | Run native tile-extractor save-format regression tests. |
 | `make package` | Build `view.tilemap.zip`, `view.tilemap-settings.zip`, `view.tile-extractor.zip` and `SHA256SUMS` under `build.nosync/`. |
 | `make serve-docs DOCS_PORT=8080` | Preview this wiki with pinned justgook/wiki v1.4.0. |
 | `make validate-docs` | Validate wiki content. |
@@ -35,6 +36,14 @@ First launch needs network access and preserves notices beside `tools/gams.app`.
 Existing downloads are not updated implicitly and Gatekeeper is not bypassed.
 User inputs in `dev-assets/` are neither packaged nor cleaned. JavaScript loads
 directly from `src/views/`; there is no compilation step.
+
+## Extracted output
+
+The detection backend accepts PNG and QOI source bytes. Save the QOI tileset
+first, then save the tilemap JSON to include that atlas's Project-relative path.
+The map uses object-valued properties and the editor's square `tileSize` cells.
+Rectangular extraction can be exported as a QOI tileset; saving it as an editor
+map fails explicitly rather than silently using an incorrect square size.
 
 ## Runtime requirements
 

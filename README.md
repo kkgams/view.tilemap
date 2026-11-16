@@ -19,11 +19,17 @@ not neighboring checkouts. The editor starts empty; use New or Open.
 | --- | --- |
 | `make open` | Download the released Host if absent, then open local `gams.json`. |
 | `make check` | Check JavaScript syntax. |
+| `make test` | Run native tile-extractor save-format regression tests. |
 | `make package` | Build three independent, stable-name ZIPs and `SHA256SUMS` under `build.nosync/`. |
 | `make serve-docs DOCS_PORT=8080` | Preview documentation with pinned wiki v1.4.0. |
 | `make validate-docs` | Validate documentation. |
 | `make docs` | Build `build.nosync/site/`. |
 | `make clean` | Remove `build.nosync/`, downloaded `tools/gams.app`, its `tools/gams-release-notices/` and identified configured downloads in `gams_modules/`; preserve supplied Units and refuse tracked files or symlinked deletion paths. |
+
+Tile extraction accepts PNG/QOI backend input. Save the QOI tileset first, then
+save the tilemap JSON to include its Project-relative atlas reference. Tilemap
+JSON uses object properties and square `tileSize` cells for the editor;
+rectangular extraction can be saved as a QOI tileset, not an editor map.
 
 Host downloads are preserved until explicitly cleaned; launch never updates an
 existing app or bypasses Gatekeeper. `dev-assets/` is optional user input and is
