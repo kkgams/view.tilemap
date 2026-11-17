@@ -30,7 +30,7 @@ tile detection uses the released plugin.
 | `make serve-docs DOCS_PORT=8080` | Preview this wiki with pinned justgook/wiki v1.4.0. |
 | `make validate-docs` | Validate wiki content. |
 | `make docs` | Build `build.nosync/site/`. |
-| `make clean` | Delete generated `build.nosync/`, downloaded Host and notices under `tools/`, and identified configured downloads in `gams_modules/`; preserve supplied Units and refuse tracked files and symlinked deletion paths. |
+| `make clean` | Remove all of `build.nosync/`, `tools/` and `gams_modules/`, without ownership markers; refuse tracked files or symlinks in deletion paths before deleting anything. |
 
 First launch needs network access and preserves notices beside `tools/gams.app`.
 Existing downloads are not updated implicitly and Gatekeeper is not bypassed.

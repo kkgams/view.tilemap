@@ -24,7 +24,7 @@ not neighboring checkouts. The editor starts empty; use New or Open.
 | `make serve-docs DOCS_PORT=8080` | Preview documentation with pinned wiki v1.4.0. |
 | `make validate-docs` | Validate documentation. |
 | `make docs` | Build `build.nosync/site/`. |
-| `make clean` | Remove `build.nosync/`, downloaded `tools/gams.app`, its `tools/gams-release-notices/` and identified configured downloads in `gams_modules/`; preserve supplied Units and refuse tracked files or symlinked deletion paths. |
+| `make clean` | Remove all of `build.nosync/`, `tools/` and `gams_modules/`, without ownership markers; refuse tracked files or symlinks in deletion paths before deleting anything. |
 
 Tile extraction accepts PNG/QOI backend input. Save the QOI tileset first, then
 save the tilemap JSON to include its Project-relative atlas reference. Tilemap
