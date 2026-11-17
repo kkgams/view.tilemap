@@ -1,6 +1,6 @@
 import { runtime, unwrap } from "/core/runtime.js"
-import { ViewCanvasBase } from "/util/view-canvas-base.js"
 import { decode as decodeQoi } from "/util/qoi/decode.js"
+import { ViewCanvasBase } from "/util/view-canvas-base.js"
 
 const TEXT_INPUT_ATTRS = 'autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"'
 const TILE_COLORS = [
@@ -320,9 +320,13 @@ export class ViewTileExtractor extends ViewCanvasBase {
         this.updateSaveButtons()
         this.setStatus(`Loading ${this.sourcePath}...`, "info")
         try {
-            const bytes = new Uint8Array(unwrap(await runtime.invoke("fs/fs::read-file", this.sourcePath), this.sourcePath))
+            const bytes = new Uint8Array(
+                unwrap(await runtime.invoke("fs/fs::read-file", this.sourcePath), this.sourcePath),
+            )
             const source =
-                getExtension(this.sourcePath) === "qoi" ? createCanvasFromQoi(bytes) : await createImageBitmap(new Blob([bytes], { type: mimeTypeForPath(this.sourcePath) }))
+                getExtension(this.sourcePath) === "qoi"
+                    ? createCanvasFromQoi(bytes)
+                    : await createImageBitmap(new Blob([bytes], { type: mimeTypeForPath(this.sourcePath) }))
             this.sourceImage = source
             this.sourceBytes = bytes
             this.sourceWidth = source.width
@@ -498,9 +502,15 @@ export class ViewTileExtractor extends ViewCanvasBase {
         assert(this.extractOutput, "view-tile-extractor requires extraction before saving tilemap")
         this.setStatus(`Saving ${path}...`, "info")
         try {
-            const tilemap = unwrap(await runtime.invoke("tile-detect/tile-detect::to-tilemap", this.extractOutput), "tilemap conversion")
+            const tilemap = unwrap(
+                await runtime.invoke("tile-detect/tile-detect::to-tilemap", this.extractOutput),
+                "tilemap conversion",
+            )
             const dimensions = this.extractOutput.tilemap
-            assert(dimensions["tile-w"] === dimensions["tile-h"], "Tilemap JSON requires square tiles; rectangular tiles can be saved as a QOI tileset")
+            assert(
+                dimensions["tile-w"] === dimensions["tile-h"],
+                "Tilemap JSON requires square tiles; rectangular tiles can be saved as a QOI tileset",
+            )
             const props = Object.fromEntries(tilemap.props)
             props.tileSize = String(dimensions["tile-w"])
             if (this.tilesetPath) props.tilesets = JSON.stringify([{ file: this.tilesetPath }])
@@ -546,7 +556,8 @@ export class ViewTileExtractor extends ViewCanvasBase {
         const headerSaveAs = this.queryHeaderControl('[data-action="save-as"]')
         if (headerSaveAs instanceof HTMLButtonElement) headerSaveAs.disabled = !hasExtraction
         const headerSaveTileset = this.queryHeaderControl('[data-action="save-tileset"]')
-        if (headerSaveTileset instanceof HTMLButtonElement) headerSaveTileset.disabled = !hasExtraction || !this.tilesetPath
+        if (headerSaveTileset instanceof HTMLButtonElement)
+            headerSaveTileset.disabled = !hasExtraction || !this.tilesetPath
         const headerSaveTilesetAs = this.queryHeaderControl('[data-action="save-tileset-as"]')
         if (headerSaveTilesetAs instanceof HTMLButtonElement) headerSaveTilesetAs.disabled = !hasExtraction
     }
