@@ -34,3 +34,37 @@ test('save without a saved atlas does not invent a file reference',async()=>{
 test('rectangular tiles fail explicitly instead of writing a misleading square-grid document',async()=>{
   const f=fixture('repeats.tileset.qoi',8);try{await assert.rejects(f.save(),/square tiles/);assert.equal(f.writes.length,0);}finally{delete globalThis.__extractorSave;}
 });
+
+test('editing extraction settings invalidates the preview and both export destinations', () => {
+  const input = new EventTarget();
+  input.value = '16';
+  input.validity = {valid: true};
+  const oldOutput = {};
+  const view = Object.assign(new ViewTileExtractor(), {
+    extractOutput: oldOutput, tilesetPath: 'old.qoi', tilemapPath: 'old.json',
+    requiredInput: () => input, draw() {}, setStatus() {}, updateSaveButtons() {},
+    renderTilebankPreview() { this.preview = this.extractOutput; },
+    setResult(text) { this.result = text; },
+  });
+  view.bindNumberField('tile-w', 'tileW');
+  input.dispatchEvent(new Event('change'));
+  assert.equal(view.extractOutput, oldOutput);
+  input.value = '8';
+  input.dispatchEvent(new Event('input'));
+  assert.deepEqual([view.tileW, view.extractOutput, view.preview, view.tilesetPath, view.tilemapPath, view.result],
+    [8, null, null, '', '', 'No extraction performed']);
+  view.extractOutput = oldOutput;
+  input.value = '';
+  input.dispatchEvent(new Event('input'));
+  assert.equal(view.extractOutput, null);
+});
+
+test('a save prepared before settings change does not write stale data', async () => {
+  const f = fixture();
+  try {
+    const save = f.save();
+    f.view.extractOutput = null;
+    await save;
+    assert.equal(f.writes.length, 0);
+  } finally { delete globalThis.__extractorSave; }
+});

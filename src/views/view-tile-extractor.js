@@ -36,16 +36,6 @@ function getExtension(path) {
     return parts.pop().toLowerCase()
 }
 
-function mimeTypeForPath(path) {
-    const ext = getExtension(path)
-    if (ext === "png") return "image/png"
-    if (ext === "jpg" || ext === "jpeg") return "image/jpeg"
-    if (ext === "webp") return "image/webp"
-    if (ext === "gif") return "image/gif"
-    if (ext === "bmp") return "image/bmp"
-    return "application/octet-stream"
-}
-
 function createCanvasFromQoi(bytes) {
     const decoded = decodeQoi(bytes.buffer, bytes.byteOffset, bytes.byteLength, 4)
     const pixels = new Uint8ClampedArray(decoded.data.buffer, decoded.data.byteOffset, decoded.data.byteLength)
@@ -79,6 +69,7 @@ export class ViewTileExtractor extends ViewCanvasBase {
         this.sourceWidth = 0
         this.sourceHeight = 0
         this.extractOutput = null
+        this.extractionRevision = 0
         this.hoveredTile = { x: -1, y: -1 }
         this.hoverTooltipTileKey = ""
         this.hoverTooltipId = 0
@@ -226,20 +217,10 @@ export class ViewTileExtractor extends ViewCanvasBase {
     }
 
     bindControls() {
-        this.bindNumberField("tile-w", (value) => {
-            this.tileW = value
-            this.draw()
-        })
-        this.bindNumberField("tile-h", (value) => {
-            this.tileH = value
-            this.draw()
-        })
-        this.bindNumberField("tolerance", (value) => {
-            this.tolerance = value
-        })
-        this.bindNumberField("skip-nth-pixel", (value) => {
-            this.skipNthPixel = value
-        })
+        this.bindNumberField("tile-w", "tileW")
+        this.bindNumberField("tile-h", "tileH")
+        this.bindNumberField("tolerance", "tolerance")
+        this.bindNumberField("skip-nth-pixel", "skipNthPixel")
 
         this.requiredInput('[data-field="show-grid"]').addEventListener("change", (event) => {
             this.showGrid = event.target.checked
@@ -253,13 +234,31 @@ export class ViewTileExtractor extends ViewCanvasBase {
         this.requiredButton("detect-size").addEventListener("click", () => this.autoDetectSize())
     }
 
-    bindNumberField(field, apply) {
+    bindNumberField(field, property) {
         const input = this.requiredInput(`[data-field="${field}"]`)
-        input.addEventListener("change", () => {
+        const update = () => {
+            if (input.value === "" || !input.validity.valid) {
+                this.invalidateExtraction()
+                this.setStatus(`Invalid extraction setting: ${field}`, "warning")
+                return
+            }
             const value = Number(input.value)
-            assert(Number.isInteger(value) && value >= Number(input.min || 0), `invalid ${field}`)
-            apply(value)
-        })
+            if (this[property] === value) return
+            this[property] = value
+            this.invalidateExtraction()
+            this.setStatus("Settings changed; extract tiles again", "info")
+        }
+        input.addEventListener("input", update)
+        input.addEventListener("change", update)
+    }
+
+    invalidateExtraction() {
+        this.extractionRevision += 1
+        this.extractOutput = null
+        this.resetOutputPaths()
+        this.renderTilebankPreview()
+        this.setResult("No extraction performed")
+        this.draw()
     }
 
     requiredInput(selector) {
@@ -302,7 +301,7 @@ export class ViewTileExtractor extends ViewCanvasBase {
                 tag: "view-files",
                 props: {
                     mode: "chooser",
-                    filter: "*.png,*.qoi,*.jpg,*.jpeg,*.webp,*.gif,*.bmp",
+                    filter: "*.png,*.qoi",
                 },
             }),
             "view-tile-extractor open source image",
@@ -315,18 +314,18 @@ export class ViewTileExtractor extends ViewCanvasBase {
 
     async loadSourceImage() {
         assert(this.sourcePath, "view-tile-extractor requires source path")
-        this.extractOutput = null
-        this.renderTilebankPreview()
-        this.updateSaveButtons()
+        this.invalidateExtraction()
         this.setStatus(`Loading ${this.sourcePath}...`, "info")
         try {
+            const extension = getExtension(this.sourcePath)
+            assert(extension === "png" || extension === "qoi", "Source image must be PNG or QOI")
             const bytes = new Uint8Array(
                 unwrap(await runtime.invoke("fs/fs::read-file", this.sourcePath), this.sourcePath),
             )
             const source =
-                getExtension(this.sourcePath) === "qoi"
+                extension === "qoi"
                     ? createCanvasFromQoi(bytes)
-                    : await createImageBitmap(new Blob([bytes], { type: mimeTypeForPath(this.sourcePath) }))
+                    : await createImageBitmap(new Blob([bytes], { type: "image/png" }))
             this.sourceImage = source
             this.sourceBytes = bytes
             this.sourceWidth = source.width
@@ -370,8 +369,12 @@ export class ViewTileExtractor extends ViewCanvasBase {
                 await runtime.invoke("tile-detect/tile-detect::detect-size", Array.from(this.sourceBytes), 4, 128),
                 "tile size detection",
             )
-            this.tileW = Number(output["tile-w"])
-            this.tileH = Number(output["tile-h"])
+            const width = Number(output["tile-w"])
+            const height = Number(output["tile-h"])
+            const changed = this.tileW !== width || this.tileH !== height
+            this.tileW = width
+            this.tileH = height
+            if (changed) this.invalidateExtraction()
             this.requiredInput('[data-field="tile-w"]').value = String(this.tileW)
             this.requiredInput('[data-field="tile-h"]').value = String(this.tileH)
             this.setStatus(`Detected ${this.tileW} × ${this.tileH}`, "success")
@@ -409,6 +412,12 @@ export class ViewTileExtractor extends ViewCanvasBase {
                 })
             }
             assert(this.sourceBytes, "view-tile-extractor requires loaded source bytes")
+            for (const field of ["tile-w", "tile-h", "tolerance", "skip-nth-pixel"]) {
+                const input = this.requiredInput(`[data-field="${field}"]`)
+                assert(input.value !== "" && input.validity.valid, `Invalid extraction setting: ${field}`)
+            }
+            this.invalidateExtraction()
+            const revision = this.extractionRevision
             const output = unwrap(
                 await runtime.invoke("tile-detect/tile-detect::extract", {
                     "source-data": Array.from(this.sourceBytes),
@@ -419,6 +428,10 @@ export class ViewTileExtractor extends ViewCanvasBase {
                 }),
                 "tile extraction",
             )
+            if (revision !== this.extractionRevision) {
+                await runtime.call("ui.toast.progressClose", { id: progressId })
+                return
+            }
             this.extractOutput = output
             this.renderTilebankPreview()
             this.updateSaveButtons()
@@ -445,32 +458,36 @@ export class ViewTileExtractor extends ViewCanvasBase {
 
     async saveTilesetAs() {
         assert(this.extractOutput, "view-tile-extractor requires extraction before saving tileset")
+        const extraction = this.extractOutput
         const path = await this.chooseOutputPath({
             title: "Save Tileset QOI As",
             filter: "*.tileset.qoi,*.qoi",
             defaultName: `${stem(this.sourcePath)}.tileset.qoi`,
         })
-        if (!path) return
+        if (!path || extraction !== this.extractOutput) return
         await this.saveTilesetToPath(path)
+        if (extraction !== this.extractOutput) return
         this.tilesetPath = path
         this.updateSaveButtons()
     }
 
     async saveTilesetToPath(path) {
         assert(this.extractOutput, "view-tile-extractor requires extraction before saving tileset")
+        const extraction = this.extractOutput
         this.setStatus(`Saving ${path}...`, "info")
         try {
             assert(this.sourceBytes, "view-tile-extractor requires loaded source bytes")
             const output = unwrap(
                 await runtime.invoke("tile-detect/tile-detect::export-tileset", {
-                    tilebank: this.extractOutput.tilebank,
+                    tilebank: extraction.tilebank,
                     "source-data": Array.from(this.sourceBytes),
-                    "source-cols": this.extractOutput.tilemap.width,
-                    "tile-w": this.tileW,
-                    "tile-h": this.tileH,
+                    "source-cols": extraction.tilemap.width,
+                    "tile-w": extraction.tilemap["tile-w"],
+                    "tile-h": extraction.tilemap["tile-h"],
                 }),
                 "tileset export",
             )
+            if (extraction !== this.extractOutput) return
             unwrap(await runtime.invoke("fs/fs::write-file", path, output.data), path)
             this.setStatus(`Saved ${path}`, "success")
             this.setResult(`Tileset ${output.width} × ${output.height}, ${output.cols} × ${output.rows} tiles`)
@@ -487,26 +504,30 @@ export class ViewTileExtractor extends ViewCanvasBase {
 
     async saveTilemapJsonAs() {
         assert(this.extractOutput, "view-tile-extractor requires extraction before saving tilemap")
+        const extraction = this.extractOutput
         const path = await this.chooseOutputPath({
             title: "Save Tilemap JSON As",
             filter: "*.tilemap.json,*.json",
             defaultName: `${stem(this.sourcePath)}.tilemap.json`,
         })
-        if (!path) return
+        if (!path || extraction !== this.extractOutput) return
         await this.saveTilemapJsonToPath(path)
+        if (extraction !== this.extractOutput) return
         this.tilemapPath = path
         this.updateSaveButtons()
     }
 
     async saveTilemapJsonToPath(path) {
         assert(this.extractOutput, "view-tile-extractor requires extraction before saving tilemap")
+        const extraction = this.extractOutput
         this.setStatus(`Saving ${path}...`, "info")
         try {
             const tilemap = unwrap(
-                await runtime.invoke("tile-detect/tile-detect::to-tilemap", this.extractOutput),
+                await runtime.invoke("tile-detect/tile-detect::to-tilemap", extraction),
                 "tilemap conversion",
             )
-            const dimensions = this.extractOutput.tilemap
+            if (extraction !== this.extractOutput) return
+            const dimensions = extraction.tilemap
             assert(
                 dimensions["tile-w"] === dimensions["tile-h"],
                 "Tilemap JSON requires square tiles; rectangular tiles can be saved as a QOI tileset",
